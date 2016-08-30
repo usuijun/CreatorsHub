@@ -33,7 +33,7 @@
   <!-- 言語切替 -->
   <script src="/languages.js"></script>
   <!-- クライアント側の機能が詰まったctrlオブジェクトの読み込み -->
-  <script src="/chub.js"></script> 
+  <script src="/chub.js"></script>
   <!-- メイン -->
   <script type="text/javascript">
     "use strict";
@@ -79,8 +79,8 @@
     </li>
   </ul>
 
-  <h1 class="ja">接続中のデバイス</h1>	
-  <h1 class="en">Connecting Devices</h1>	
+  <h1 class="ja">接続中のデバイス</h1>
+  <h1 class="en">Connecting Devices</h1>
   <div id="network"></div>
 
   <hr><!------------------------------------------------------------------->
@@ -140,7 +140,7 @@
   <h3 class="en">Message Analyzer</h3>
   <table id="analyzer">
   </table>
-  
+
   <hr><!------------------------------------------------------------------->
 
   <h3 class="ja">このページをJSONクライアントとしてネットワーク参加する</h3>
@@ -179,6 +179,17 @@
        </td></tr>
     </table>
   </div>
+
+  <hr><!------------------------------------------------------------------->
+
+  <h3 class="ja">デバッグ用シンセを追加する</h3>
+  <h3 class="en">Add an audio synthesizer for debugging</h3>
+  <div id=jsonclient_join>
+      <table><tr><td>
+      <button onclick="ctrl.add_synthesizer();"><span class="ja">追加</span><span class="en">Join</span></button><br>
+      </td></tr></table>
+  </div>
+
   <hr><!------------------------------------------------------------------->
 
   <h3 class="ja">結線情報の履歴をクリアする</h3>

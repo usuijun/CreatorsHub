@@ -1,5 +1,44 @@
 "use strict";
 
+var Synth = function() {
+  this.ctx = new AudioContext();
+  //this.vco = this.ctx.createOscillator();
+  this.vco = null;
+  this.audioContext = window.AudioContext || window.webkitAudioContext;
+  this.isPlaying = false;
+  //this.vco.connect(this.ctx.destination);
+
+  this.prepareSound = function() {
+    this.vco = this.ctx.createOscillator();
+    this.vco.connect(this.ctx.destination);
+  }
+
+  this.noteNo2freq = function(noteNo) {
+    return 440 * Math.pow(2,(noteNo - 69) / 12);
+  };
+  this.setPitch = function(pitch) {
+    this.vco.frequency.value = pitch;
+  };
+
+  this.noteOn = function(noteNo) {
+    this.setPitch(this.noteNo2freq(noteNo));
+    if(this.isPlaying == false){
+      this.vco.start();
+      this.isPlaying = true;
+    }
+  };
+
+  this.noteOff = function(noteNo){
+    if(this.isPlaying == true){
+      this.vco.stop();
+      this.prepareSound();
+      this.isPlaying = false;
+    }
+  }
+
+  this.prepareSound();
+}
+
 // 4分音符に24回届くtimingメッセージを元に適当にテンポを推定する
 var Timing = function(){
   return {
@@ -126,7 +165,7 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput)
       cell.innerHTML = "OUT";
       cell.style.textAlign = "right";
     }else{
-      cell.innerHTML = "IN"; 
+      cell.innerHTML = "IN";
       cell.style.textAlign = "left";
     }
     for(var o = 0; o < outputIdList.length; o++){
@@ -199,6 +238,11 @@ var ctrl = {
     this.socket.on("message_analyzer", this.onMessageAnalyzer.bind(this));
     this.socket.on("disconnect",   this.onDisconnect.bind(this));
 
+    // シンセソケットの初期化
+    this.synthSocket = io.connect();
+    this.synthSocket.on("message_json", this.onSynthMessage.bind(this));
+    //this.synth.on("connect"),
+
     // UIを初期化
     this.showJsonClient(false);
 
@@ -220,7 +264,7 @@ var ctrl = {
       var serverAddress = document.getElementById("server_address");
       serverAddress.innerText = obj.server + ":" + obj.port;
     }
-    
+
     if(obj.documents){
       var docs = document.getElementById("documents_list");
       docs.innerHTML = "";
@@ -231,8 +275,20 @@ var ctrl = {
   },
 
   onMessageJson : function(obj){
+    console.log("msg json" + obj);
     this.addMessage(obj);
     this.timing.get(obj);
+  },
+
+  onSynthMessage : function(msg) {
+      var msgStr = msg["address"];
+      var arg = msg["args"];
+      var noteNo = arg[1];
+      if (msgStr == ("/midi/noteon")){
+        this.synth.noteOn(noteNo);
+      }else if (msgStr == ("/midi/noteoff")){
+        this.synth.noteOff(noteNo);
+      }
   },
 
   onMessageAnalyzer : function(obj){
@@ -310,7 +366,7 @@ var ctrl = {
           min = 0;
           range = 1;
         }
-        
+
         // 描画
         td = cells.namedItem(id);
         var canvas = td.childNodes[0];
@@ -364,7 +420,7 @@ var ctrl = {
       var updateSVG = function(id, obj){
         var svg = getSVG(id);
         svg.style("background-color", "#fff0f0");
-        
+
         var circles = svg.selectAll("circle")
          .data(obj.events)
          .enter()
@@ -382,7 +438,7 @@ var ctrl = {
               return svgRadius;
          })
          .attr("fill","red");
- 
+
          circles.transition().delay(500).duration(1000).attr("r", 1);
       };
       //-------------------------
@@ -545,6 +601,10 @@ var ctrl = {
     this.showJsonClient(true);
   },
 
+  add_synthesizer: function() {
+    this.synthSocket.emit("join_as_wsjson", {"name": "Debug Synth"});
+  },
+
   exit_wsjson: function() {
     //this.socket.emit("close_input", { type: "json", name: "mw1"} );
     //this.socket.emit("close_output", { type: "json", name: "mw1"} );
@@ -555,7 +615,7 @@ var ctrl = {
   clear_json_msg: function() {
     document.getElementById("msg").innerHTML = "";
   },
-  
+
   // OSC送受信ポートアドレスの作成（仮）
   make_osc_name : function(host, port) {
     // 無効なホストやポートの場合は undefined
@@ -600,7 +660,7 @@ var ctrl = {
       this.socket.emit("open_input", { type: "midi", name: name.value} );
     }
   },
-  
+
   open_new_vmidi_output: function() {
     var name = document.getElementById('vmidi_output');
     if(name.value){
@@ -615,14 +675,14 @@ var ctrl = {
       this.socket.emit("open_input", { type: "rtp", name: name.value} );
     }
   },
-  
+
   open_new_rtpmidi_output: function() {
     var name = document.getElementById('rtpmidi_output');
     if(name.value){
       this.socket.emit("open_output", { type: "rtp", name: name.value} );
     }
   },
-    
+
   publishMessage: function(msg, callback) {
     var textInput = document.getElementById('msg_input');
     try{
@@ -661,6 +721,8 @@ var ctrl = {
 
   // members
   socket: undefined, // Web Socket クライアント
+  synthSocket: undefined,
+  synth: new Synth(),
   filter: {},        // メッセージをフィルタする
   timing: Timing(),  // テンポ計算
 }
