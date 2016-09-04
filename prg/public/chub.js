@@ -54,6 +54,25 @@ function isClientRemovable(client){
   return client.owner == "user"; // user作成入出力はすべて削除可能
 }
 
+function isClientRecordable(client) {
+  if (client.type === "recording") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function isClientPlayable(client) {
+  console.log(client.type);
+  if (client.type === "player") {
+    console.log("isplayer");
+    return true;
+  } else {
+    console.log("isnot playaer");
+    return false;
+  }
+}
+
 // プレーンテキストで接続状態を表示する
 function makeConnectionString(inputs, outputs, connections){
   var txt = "[network and connection information]<br>"
@@ -75,7 +94,8 @@ function makeConnectionString(inputs, outputs, connections){
 
 
 // N個のdevice名を記した配列を受け取ってその接続マトリックスのhtmlを作る
-function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput){
+function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput, onClickRec, onClickStop, onClickPlay, onClickStopPlay){
+  console.log("make conn");
   //////////////////////////////
   // 表示用情報作成
 
@@ -83,20 +103,26 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput)
   var inputNames  = {};
   var inputIdList = [];
   var isRemovableInputs  = {};
+  var playerInputs = {};
   for(var inputId  in obj.inputs ){
     inputNames[inputId] = makeNodeName(obj.inputs[inputId]);
     isRemovableInputs[inputId] = isClientRemovable(obj.inputs[inputId]);
+    playerInputs[inputId] = isClientPlayable(obj.inputs[inputId]);
     inputIdList.push(inputId);
   }
   // 出力側の表示情報作成
   var outputNames = {};
   var outputIdList = [];
   var isRemovableOutputs  = {};
+  var recordingOutputs = {};
+
   for(var outputId in obj.outputs){
     outputNames[outputId] = makeNodeName(obj.outputs[outputId]);
     isRemovableOutputs[outputId] = isClientRemovable(obj.outputs[outputId]);
+    recordingOutputs[outputId] = isClientRecordable(obj.outputs[outputId]);
     outputIdList.push(outputId);
   }
+
   // 入出力IDを名前順にソート
   inputIdList.sort(function(a, b){
     if(inputNames[a] < inputNames[b]) return -1;
@@ -126,7 +152,7 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput)
       cell.innerHTML = "OUT";
       cell.style.textAlign = "right";
     }else{
-      cell.innerHTML = "IN"; 
+      cell.innerHTML = "IN";
       cell.style.textAlign = "left";
     }
     for(var o = 0; o < outputIdList.length; o++){
@@ -140,6 +166,16 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput)
           btnRemove.innerText = "×";
           btnRemove.addEventListener('click', onRemoveOscOutput.bind(null, parseInt(outputId)));
           cell.appendChild(btnRemove);
+        }
+        if(recordingOutputs[outputId]) {
+          var btnRec = document.createElement("button");
+          btnRec.innerText = "rec";
+          btnRec.addEventListener('click', onClickRec.bind(null, parseInt(outputId)));
+          cell.appendChild(btnRec);
+          var btnSave = document.createElement("button");
+          btnSave.innerText = "stop";
+          btnSave.addEventListener('click', onClickStop.bind(null, parseInt(outputId)));
+          cell.appendChild(btnSave);
         }
       }else{
         cell.innerHTML = "▲";
@@ -163,6 +199,17 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput)
       btnRemove.innerText = "×";
       btnRemove.addEventListener('click', onRemoveOscInput.bind(null, parseInt(inputId)));
       cell.appendChild(btnRemove);
+    }
+    if(playerInputs[inputId]) {
+      console.log("play input");
+      var btnPlay = document.createElement("button");
+      btnPlay.innerText = "play";
+      btnPlay.addEventListener('click', onClickPlay.bind(null, parseInt(inputId)));
+      cell.appendChild(btnPlay);
+      var btnSave = document.createElement("button");
+      btnSave.innerText = "stop";
+      btnSave.addEventListener('click', onClickStopPlay.bind(null, parseInt(inputId)));
+      cell.appendChild(btnSave);
     }
     for(var o = 0; o < outputIdList.length; o++){
       var outputId = outputIdList[o];
@@ -211,7 +258,7 @@ var ctrl = {
   onUpdateList: function(obj){
     // htmlのtableでコネクションマトリックスを作る
     // マトリックス内のボタンクリックでサーバーに接続変更を指示する
-    var table = makeConnectionTable(obj, this.add_connection.bind(this), this.close_osc_input.bind(this), this.close_osc_output.bind(this));
+    var table = makeConnectionTable(obj, this.add_connection.bind(this), this.close_osc_input.bind(this), this.close_osc_output.bind(this), this.start_rec.bind(this), this.stop_rec.bind(this), this.start_play.bind(this), this.stop_play.bind(this));
     var networkArea = document.getElementById("network");
     networkArea.textContent = null;
     networkArea.appendChild(table);
@@ -220,7 +267,7 @@ var ctrl = {
       var serverAddress = document.getElementById("server_address");
       serverAddress.innerText = obj.server + ":" + obj.port;
     }
-    
+
     if(obj.documents){
       var docs = document.getElementById("documents_list");
       docs.innerHTML = "";
@@ -310,7 +357,7 @@ var ctrl = {
           min = 0;
           range = 1;
         }
-        
+
         // 描画
         td = cells.namedItem(id);
         var canvas = td.childNodes[0];
@@ -364,7 +411,7 @@ var ctrl = {
       var updateSVG = function(id, obj){
         var svg = getSVG(id);
         svg.style("background-color", "#fff0f0");
-        
+
         var circles = svg.selectAll("circle")
          .data(obj.events)
          .enter()
@@ -382,7 +429,7 @@ var ctrl = {
               return svgRadius;
          })
          .attr("fill","red");
- 
+
          circles.transition().delay(500).duration(1000).attr("r", 1);
       };
       //-------------------------
@@ -555,7 +602,7 @@ var ctrl = {
   clear_json_msg: function() {
     document.getElementById("msg").innerHTML = "";
   },
-  
+
   // OSC送受信ポートアドレスの作成（仮）
   make_osc_name : function(host, port) {
     // 無効なホストやポートの場合は undefined
@@ -594,13 +641,37 @@ var ctrl = {
     this.socket.emit("close_output", param);
   },
 
+  start_rec: function(outputId) {
+    var param = {outputId: outputId};
+    console.log("start_rec: " + JSON.stringify(param));
+    this.socket.emit("start_rec", param);
+  },
+
+  stop_rec: function(outputId) {
+    var param = {outputId: outputId};
+    console.log("stop_rec: " + JSON.stringify(param));
+    this.socket.emit("stop_rec", param);
+  },
+
+  start_play: function(inputId) {
+    var param = {inputId: inputId};
+    console.log("start_play: " + JSON.stringify(param));
+    this.socket.emit("start_play", param);
+  },
+
+  stop_play: function(inputId) {
+    var param = {inputId: inputId};
+    console.log("stop_play: " + JSON.stringify(param));
+    this.socket.emit("stop_play", param);
+  },
+
   open_new_vmidi_input: function() {
     var name = document.getElementById('vmidi_input');
     if(name.value){
       this.socket.emit("open_input", { type: "midi", name: name.value} );
     }
   },
-  
+
   open_new_vmidi_output: function() {
     var name = document.getElementById('vmidi_output');
     if(name.value){
@@ -615,14 +686,24 @@ var ctrl = {
       this.socket.emit("open_input", { type: "rtp", name: name.value} );
     }
   },
-  
+
   open_new_rtpmidi_output: function() {
     var name = document.getElementById('rtpmidi_output');
     if(name.value){
       this.socket.emit("open_output", { type: "rtp", name: name.value} );
     }
   },
-    
+
+  open_new_recording: function() {
+    var name = document.getElementById('rec_name');
+    this.socket.emit("open_output", { type: "recording", name: name.value});
+  },
+
+  open_new_player: function() {
+    var name = document.getElementById('player_name');
+    this.socket.emit("open_input", { type: "player", name: name.value});
+  },
+
   publishMessage: function(msg, callback) {
     var textInput = document.getElementById('msg_input');
     try{

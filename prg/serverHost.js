@@ -26,7 +26,6 @@ function ServerHost(){ return{
   modules: {},  // クライアントモジュール
   documents: [],
   serverAddress: undefined,
-                
   g_httpApp: undefined,
   g_server: undefined,
   g_io: undefined,
@@ -52,7 +51,7 @@ function ServerHost(){ return{
       console.log("appendModule: " + name + " not found.");
     }
   },
-  
+
   appendModulesInDir : function(dir){
     // search files in dir.
     fs.readdir(dir, function (err, files) {
@@ -129,18 +128,18 @@ function ServerHost(){ return{
         this.clients.deliver(id, obj);
       }.bind(this),
       sendMessageTo : function(id, msg, obj){
-        this.g_io.to(id).emit(msg, obj);                
+        this.g_io.to(id).emit(msg, obj);
       }.bind(this),
       sendWebAppMessage : function(msg, obj){
-        this.g_io.sockets.emit(msg, obj);                
+        this.g_io.sockets.emit(msg, obj);
       }.bind(this),
     };
   },
-  
+
   // 初期化
   init : function(){
     this.openWebSocket();
-    
+
     var settings = this.clients.loadSettings();
     for(var i in settings.userInputs){
        this.open_input({}, {type: settings.userInputs[i].type, name: settings.userInputs[i].name});
@@ -152,7 +151,7 @@ function ServerHost(){ return{
     this.clients.connections = settings.connections;
     this.clients.updateConnectionsById();
     this.update_list(); // ネットワーク更新
-    
+
     //this.openDevices();
   },
 
@@ -253,7 +252,7 @@ function ServerHost(){ return{
     this.g_io.sockets.emit("test_modules", result);
     return result;
   },
-  
+
   // wsjsonクライアントとしてネットワークに参加する
   join_as_wsjson : function(socket, param) {
     var obj = {
@@ -286,7 +285,7 @@ function ServerHost(){ return{
   },
 
   //------------------
-  // 
+  //
 
   //  - このサーバーの受信ポートを作成する
   open_input : function(socket, obj, owner) {
@@ -348,6 +347,35 @@ function ServerHost(){ return{
     this.update_list(); // クライアントのネットワーク表示更新
   },
 
+  start_rec : function(socket, obj) {
+    console.log(obj.outputId + " start rec");
+    console.log(this.clients.outputs[obj.outputId]);
+    this.clients.outputs[obj.outputId].startRec();
+  },
+
+  stop_rec : function(socket, obj) {
+    var recData = this.clients.outputs[obj.outputId].getRecordingData();
+
+    var dirHome = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
+    var SETTING_FILE = dirHome + "/chub_rec.json";
+
+    fs.writeFile(SETTING_FILE, recData, function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    console.log("The file was saved!");
+    });
+  },
+
+  start_play : function(socket, obj) {
+    console.log("play start---");
+    this.clients.inputs[obj.inputId].startPlay();
+  },
+
+   stop_play : function(socket, obj) {
+     this.clients.inputs[obj.inputId].stopPlay();
+   },
+
   // ネットワークから離脱する
   disconnect : function(socket) {
     var inputExisted = this.clients.deleteClientInput (this.clients.socketId2InputClientId (socket.id));
@@ -362,7 +390,7 @@ function ServerHost(){ return{
   },
 
   //------------------
-  
+
   openWebSocket : function(){
     this.g_httpApp= connect();
     this.g_httpApp.use(serveStatic(PUBLIC_DIR));
@@ -425,6 +453,12 @@ function ServerHost(){ return{
     socket.on("open_output", this.open_output.bind(this, socket) );      // 送信ポートを開く
     socket.on("close_input",  this.close_input.bind(this, socket) );     // 受信ポートを閉じる
     socket.on("close_output", this.close_output.bind(this, socket) );    // 送信ポートを閉じる
+
+    // rec, play module用
+    socket.on("start_rec", this.start_rec.bind(this, socket) );
+    socket.on("stop_rec", this.stop_rec.bind(this, socket) );
+    socket.on("start_play", this.start_play.bind(this, socket));
+    socket.on("stop_play", this.stop_play.bind(this, socket));
 
     // ソケット自体の接続終了
     socket.on("disconnect",   this.disconnect.bind(this, socket) );

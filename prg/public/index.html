@@ -33,7 +33,7 @@
   <!-- 言語切替 -->
   <script src="/languages.js"></script>
   <!-- クライアント側の機能が詰まったctrlオブジェクトの読み込み -->
-  <script src="/chub.js"></script> 
+  <script src="/chub.js"></script>
   <!-- メイン -->
   <script type="text/javascript">
     "use strict";
@@ -79,8 +79,8 @@
     </li>
   </ul>
 
-  <h1 class="ja">接続中のデバイス</h1>	
-  <h1 class="en">Connecting Devices</h1>	
+  <h1 class="ja">接続中のデバイス</h1>
+  <h1 class="en">Connecting Devices</h1>
   <div id="network"></div>
 
   <hr><!------------------------------------------------------------------->
@@ -136,11 +136,35 @@
   </table>
 
   <hr><!------------------------------------------------------------------->
+
+  <h3 class="ja">レコーダーを登録する</h3>
+  <h3 class="en">Add Recording Module to Network</h3>
+  <table>
+    <tr>
+      <td><span class="ja">レコーダーを追加</span><span class="en">Add Recording Module</span></td>
+      <td><span class="ja">名前</span><span class="en">Name</span><input type="text" id="rec_name" style="width:240px;" />
+        <button onclick="ctrl.open_new_recording();"><span class="ja">追加</span><span class="en">Add</span></button></td>
+    </tr>
+  </table>
+
+  <hr><!------------------------------------------------------------------->
+
+    <h3 class="ja">再生シミュレーターを登録する</h3>
+    <h3 class="en">Add Play Simulator Module to Network</h3>
+    <table>
+      <tr>
+        <td><span class="ja">再生シミュレーターを追加</span><span class="en">Add Play Simulator Module</span></td>
+        <td><span class="ja">名前</span><span class="en">Name</span><input type="text" id="player_name" style="width:240px;" />
+          <button onclick="ctrl.open_new_player();"><span class="ja">追加</span><span class="en">Add</span></button></td>
+      </tr>
+    </table>
+
+    <hr><!------------------------------------------------------------------->
   <h3 class="ja">メッセージ分析</h3>
   <h3 class="en">Message Analyzer</h3>
   <table id="analyzer">
   </table>
-  
+
   <hr><!------------------------------------------------------------------->
 
   <h3 class="ja">このページをJSONクライアントとしてネットワーク参加する</h3>

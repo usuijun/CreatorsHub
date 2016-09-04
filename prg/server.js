@@ -44,6 +44,8 @@ g_server.appendModule('./client_modules/clientOsc');
 g_server.appendModule('./client_modules/clientMidi');
 g_server.appendModule('./client_modules/clientRtpMidi');
 g_server.appendModule('./client_modules/clientAnalyzer');
+g_server.appendModule('./client_modules/clientRecording');
+g_server.appendModule('./client_modules/clientPlayer');
 
 // load documents list
 g_server.loadDocument(__dirname);
