@@ -354,16 +354,22 @@ function ServerHost(){ return{
   },
 
   stop_rec : function(socket, obj) {
+    console.log(obj.outputId + " start rec");
+    console.log(this.clients.outputs[obj.outputId]);
+    this.clients.outputs[obj.outputId].stopRec();
+  },
+
+  get_rec_data : function(socket, obj) {
     var recData = this.clients.outputs[obj.outputId].getRecordingData();
 
     var dirHome = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
     var SETTING_FILE = dirHome + "/chub_rec.json";
 
-    fs.writeFile(SETTING_FILE, recData, function(err) {
+    fs.writeFile(SETTING_FILE, JSON.stringify(recData), function(err) {
     if(err) {
         return console.log(err);
     }
-    console.log("The file was saved!");
+    console.log("Save File");
     });
   },
 
@@ -374,6 +380,11 @@ function ServerHost(){ return{
 
    stop_play : function(socket, obj) {
      this.clients.inputs[obj.inputId].stopPlay();
+   },
+
+   load_data : function(socket, obj) {
+     console.log("load data" + JSON.stringify(obj));
+     this.clients.inputs[obj.inputId].loadData(obj.rec_data);
    },
 
   // ネットワークから離脱する
@@ -457,8 +468,10 @@ function ServerHost(){ return{
     // rec, play module用
     socket.on("start_rec", this.start_rec.bind(this, socket) );
     socket.on("stop_rec", this.stop_rec.bind(this, socket) );
+    socket.on("get_rec_data", this.get_rec_data.bind(this, socket) );
     socket.on("start_play", this.start_play.bind(this, socket));
     socket.on("stop_play", this.stop_play.bind(this, socket));
+    socket.on("load_data", this.load_data.bind(this, socket));
 
     // ソケット自体の接続終了
     socket.on("disconnect",   this.disconnect.bind(this, socket) );

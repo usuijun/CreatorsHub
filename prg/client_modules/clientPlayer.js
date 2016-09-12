@@ -22,20 +22,7 @@ function ClientPlayer(name){
   var io = client_io(type, name);
   io.owner = "user"; //removable
   var startMsec = 0;
-  //var messages = []; //辞書を突っ込む
-  //テストデータ
-  var messages = [{ msg: { address: '/midi/noteon', args: [ 0, 64, 100 ] },
-  time: 742 },
-  { msg: { address: '/midi/noteoff', args: [ 0, 64, 100 ] },
-  time: 978 },
-  { msg: { address: '/midi/noteon', args: [ 0, 64, 100 ] },
-  time: 1746 },
-  { msg: { address: '/midi/noteoff', args: [ 0, 64, 100 ] },
-  time: 2000 },
-  { msg: { address: '/midi/noteon', args: [ 0, 62, 100 ] },
-  time: 2495 },
-  { msg: { address: '/midi/noteoff', args: [ 0, 62, 100 ] },
-  time: 2744 }]
+  var messages = []; //辞書を突っ込む
   var intervalRef = null;
   var currentIndex = 0;
 

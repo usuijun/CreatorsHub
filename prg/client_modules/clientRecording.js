@@ -59,7 +59,7 @@ function ClientRecording(name){
     startMsec = date.getTime();
   }
 
-  io.finishRec = function() {
+  io.stopRec = function() {
     isStart = false;
   }
 

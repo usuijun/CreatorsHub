@@ -94,7 +94,7 @@ function makeConnectionString(inputs, outputs, connections){
 
 
 // N個のdevice名を記した配列を受け取ってその接続マトリックスのhtmlを作る
-function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput, onClickRec, onClickStop, onClickPlay, onClickStopPlay){
+function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput, onClickStartRec, onClickStopRec, onClickDL, onClickPlay, onClickStopPlay, onClickLoad){
   console.log("make conn");
   //////////////////////////////
   // 表示用情報作成
@@ -170,12 +170,16 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput,
         if(recordingOutputs[outputId]) {
           var btnRec = document.createElement("button");
           btnRec.innerText = "rec";
-          btnRec.addEventListener('click', onClickRec.bind(null, parseInt(outputId)));
+          btnRec.addEventListener('click', onClickStartRec.bind(null, parseInt(outputId)));
           cell.appendChild(btnRec);
-          var btnSave = document.createElement("button");
-          btnSave.innerText = "stop";
-          btnSave.addEventListener('click', onClickStop.bind(null, parseInt(outputId)));
-          cell.appendChild(btnSave);
+          var btnStop = document.createElement("button");
+          btnStop.innerText = "stop";
+          btnStop.addEventListener('click', onClickStopRec.bind(null, parseInt(outputId)));
+          cell.appendChild(btnStop);
+          var btnDL = document.createElement("button");
+          btnDL.innerText = "DL";
+          btnDL.addEventListener('click', onClickDL.bind(null, parseInt(outputId)));
+          cell.appendChild(btnDL);
         }
       }else{
         cell.innerHTML = "▲";
@@ -210,7 +214,30 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput,
       btnSave.innerText = "stop";
       btnSave.addEventListener('click', onClickStopPlay.bind(null, parseInt(inputId)));
       cell.appendChild(btnSave);
+
+      var inputForm = document.createElement("INPUT");
+      inputForm.setAttribute("type", "file");
+      cell.appendChild(inputForm);
+      inputForm.onchange = function() {
+        if(!(inputForm.value)) return;
+        if(!(window.FileReader)) return;
+        var file_list = inputForm.files;
+        if(!file_list) return;
+
+        var file = file_list[0];
+        if(!file) return;
+
+        var file_reader = new FileReader();
+        file_reader.onload = function(e){
+          var d = JSON.parse(file_reader.result);
+          onClickLoad(parseInt(inputId), d.rec_data)
+        }
+        file_reader.readAsText(file);
+      }
+      //inputFile.innerText = "load";
+      //inputFile.addEventListener('click', onClickLoad.bind(null, parseInt(inputId)));
     }
+
     for(var o = 0; o < outputIdList.length; o++){
       var outputId = outputIdList[o];
       (function(inputId, outputId){ // capture variables
@@ -258,7 +285,8 @@ var ctrl = {
   onUpdateList: function(obj){
     // htmlのtableでコネクションマトリックスを作る
     // マトリックス内のボタンクリックでサーバーに接続変更を指示する
-    var table = makeConnectionTable(obj, this.add_connection.bind(this), this.close_osc_input.bind(this), this.close_osc_output.bind(this), this.start_rec.bind(this), this.stop_rec.bind(this), this.start_play.bind(this), this.stop_play.bind(this));
+    var table = makeConnectionTable(obj, this.add_connection.bind(this), this.close_osc_input.bind(this), this.close_osc_output.bind(this), this.start_rec.bind(this), this.stop_rec.bind(this), this.get_rec_data.bind(this), this.start_play.bind(this), this.stop_play.bind(this),
+  this.load_play_data.bind(this));
     var networkArea = document.getElementById("network");
     networkArea.textContent = null;
     networkArea.appendChild(table);
@@ -653,6 +681,12 @@ var ctrl = {
     this.socket.emit("stop_rec", param);
   },
 
+  get_rec_data: function(outputId) {
+    var param = {outputId: outputId};
+    console.log("get_rec_data: " + JSON.stringify(param));
+    this.socket.emit("get_rec_data", param);
+  },
+
   start_play: function(inputId) {
     var param = {inputId: inputId};
     console.log("start_play: " + JSON.stringify(param));
@@ -663,6 +697,12 @@ var ctrl = {
     var param = {inputId: inputId};
     console.log("stop_play: " + JSON.stringify(param));
     this.socket.emit("stop_play", param);
+  },
+
+  load_play_data: function(inputId, rec_data) {
+    console.log("load play data");
+    var param = {inputId: inputId, rec_data};
+    this.socket.emit("load_data", param);
   },
 
   open_new_vmidi_input: function() {
