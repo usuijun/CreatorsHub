@@ -55,7 +55,7 @@ function isClientRemovable(client){
 }
 
 function isClientRecordable(client) {
-  if (client.type === "recording") {
+  if (client.type === "recorder") {
     return true;
   } else {
     return false;
@@ -682,9 +682,13 @@ var ctrl = {
   },
 
   get_rec_data: function(outputId) {
-    var param = {outputId: outputId};
-    console.log("get_rec_data: " + JSON.stringify(param));
-    this.socket.emit("get_rec_data", param);
+    // downlaodする
+    var a = document.createElement('a');
+    // URI を元にダウンロード時のファイル名を決定
+    a.download = outputId + ".json"
+    a.href     = "http://localhost:16080/" + outputId + ".json"
+    console.log(a.href)
+    a.click();
   },
 
   start_play: function(inputId) {
@@ -736,7 +740,7 @@ var ctrl = {
 
   open_new_recording: function() {
     var name = document.getElementById('rec_name');
-    this.socket.emit("open_output", { type: "recording", name: name.value});
+    this.socket.emit("open_output", { type: "recorder", name: name.value});
   },
 
   open_new_player: function() {

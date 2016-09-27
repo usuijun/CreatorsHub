@@ -357,20 +357,13 @@ function ServerHost(){ return{
     console.log(obj.outputId + " start rec");
     console.log(this.clients.outputs[obj.outputId]);
     this.clients.outputs[obj.outputId].stopRec();
-  },
 
-  get_rec_data : function(socket, obj) {
-    var recData = this.clients.outputs[obj.outputId].getRecordingData();
-
+    // publicににデータを保存
     var dirHome = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
-    var SETTING_FILE = dirHome + "/chub_rec.json";
-
+    var SETTING_FILE = PUBLIC_DIR + "/" + obj.outputId + ".json";
     fs.writeFile(SETTING_FILE, JSON.stringify(recData), function(err) {
-    if(err) {
-        return console.log(err);
-    }
-    console.log("Save File");
-    });
+        console.log(err);
+      })
   },
 
   start_play : function(socket, obj) {
@@ -468,7 +461,7 @@ function ServerHost(){ return{
     // rec, play module用
     socket.on("start_rec", this.start_rec.bind(this, socket) );
     socket.on("stop_rec", this.stop_rec.bind(this, socket) );
-    socket.on("get_rec_data", this.get_rec_data.bind(this, socket) );
+    //socket.on("get_rec_data", this.get_rec_data.bind(this, socket) );
     socket.on("start_play", this.start_play.bind(this, socket));
     socket.on("stop_play", this.stop_play.bind(this, socket));
     socket.on("load_data", this.load_data.bind(this, socket));
