@@ -40,6 +40,7 @@ function ClientPlayer(name){
 
   io.loadData = function(data) {
     messages = data;
+    //console.log("data"+messages)
   }
 
   io.startPlay = function() {

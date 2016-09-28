@@ -168,6 +168,7 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput,
           cell.appendChild(btnRemove);
         }
         if(recordingOutputs[outputId]) {
+          //console.log("outid:" + outputId)
           var btnRec = document.createElement("button");
           btnRec.innerText = "rec";
           btnRec.addEventListener('click', onClickStartRec.bind(null, parseInt(outputId)));
@@ -214,7 +215,8 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput,
       btnSave.innerText = "stop";
       btnSave.addEventListener('click', onClickStopPlay.bind(null, parseInt(inputId)));
       cell.appendChild(btnSave);
-
+      var breakline = document.createElement("br");
+      cell.appendChild(breakline)
       var inputForm = document.createElement("INPUT");
       inputForm.setAttribute("type", "file");
       cell.appendChild(inputForm);
@@ -230,7 +232,8 @@ function makeConnectionTable(obj, onChange, onRemoveOscInput, onRemoveOscOutput,
         var file_reader = new FileReader();
         file_reader.onload = function(e){
           var d = JSON.parse(file_reader.result);
-          onClickLoad(parseInt(inputId), d.rec_data)
+          console.log(d)
+          onClickLoad(parseInt(inputId), d)
         }
         file_reader.readAsText(file);
       }
@@ -682,6 +685,7 @@ var ctrl = {
   },
 
   get_rec_data: function(outputId) {
+    //console.log("outputid:" + outputId)
     // downlaodする
     var a = document.createElement('a');
     // URI を元にダウンロード時のファイル名を決定
@@ -705,6 +709,7 @@ var ctrl = {
 
   load_play_data: function(inputId, rec_data) {
     console.log("load play data");
+    //console.log(rec_data)
     var param = {inputId: inputId, rec_data};
     this.socket.emit("load_data", param);
   },

@@ -357,7 +357,8 @@ function ServerHost(){ return{
     console.log(obj.outputId + " start rec");
     console.log(this.clients.outputs[obj.outputId]);
     this.clients.outputs[obj.outputId].stopRec();
-
+    var recData = this.clients.outputs[obj.outputId].getRecordingData()
+    //console.log(recData)
     // publicににデータを保存
     var dirHome = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
     var SETTING_FILE = PUBLIC_DIR + "/" + obj.outputId + ".json";
